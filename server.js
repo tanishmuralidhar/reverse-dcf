@@ -45,8 +45,8 @@ app.get('/api/company/:ticker', async (req, res) => {
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-// ---- static frontend ----
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+// ---- static frontend (served from the project root, matching the Vercel layout) ----
+app.use(express.static(__dirname, { extensions: ['html'] }));
 
 app.listen(PORT, () => {
   console.log(`Reverse DCF running →  http://localhost:${PORT}`);
