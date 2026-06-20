@@ -1,6 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="13" fill="#122742"/>
-  <!-- reverse arrow: solving backwards -->
-  <path d="M44 26a14 14 0 1 0 2.5 12" fill="none" stroke="#F3EDDD" stroke-width="4.5" stroke-linecap="round"/>
-  <path d="M44 17v10h-10" fill="none" stroke="#7C2128" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Ivory rounded square -->
+  <rect width="64" height="64" rx="12" fill="#F8F4EA"/>
+  <!-- 1px oxblood inner keyline -->
+  <rect x="3.5" y="3.5" width="57" height="57" rx="9" fill="none" stroke="#7C2128" stroke-width="1"/>
+  <!-- "TM" — hand-outlined serif letterforms (no webfont dependency), navy ink -->
+  <g fill="#122742">
+    <!-- T: top bar with hanging end serifs, stem, foot serif -->
+    <path d="M9 20 h20 v3.4 h-20 Z"/>
+    <path d="M9 23.4 h2.6 v2.8 h-2.6 Z"/>
+    <path d="M26.4 23.4 h2.6 v2.8 h-2.6 Z"/>
+    <path d="M17.3 23.4 h3.4 v19.4 h-3.4 Z"/>
+    <path d="M14.6 42.8 h8.8 v2.7 h-8.8 Z"/>
+    <!-- M: two stems, mid vertex, foot serifs -->
+    <path d="M34 20 L37.3 20 L44 34.6 L50.7 20 L54 20 L54 42.8 L50.7 42.8 L50.7 26.8 L45.2 38.6 L42.8 38.6 L37.3 26.8 L37.3 42.8 L34 42.8 Z"/>
+    <path d="M31.9 42.8 h7.6 v2.7 h-7.6 Z"/>
+    <path d="M48.5 42.8 h7.6 v2.7 h-7.6 Z"/>
+  </g>
 </svg>
