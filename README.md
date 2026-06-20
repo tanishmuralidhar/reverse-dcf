@@ -22,9 +22,9 @@ A two-stage DCF on free cash flow (operating cash flow − capex). The explicit 
 
 | Path | Role |
 | --- | --- |
-| `server.js` | Express server: serves `public/` and exposes `GET /api/company/:ticker`. |
+| `server.js` | Express server (local dev): serves the static files and exposes `GET /api/company/:ticker`. |
 | `lib/provider.js` | Pulls fundamentals from Yahoo Finance (no API key) via `yahoo-finance2` and normalizes them. Combines the `quoteSummary` snapshot with `fundamentalsTimeSeries` history (Yahoo deprecated the `quoteSummary` statement modules in late 2024). |
-| `api/company/[ticker].js` | Vercel serverless wrapper around `getCompany()` for production. |
+| `api/company.js` | Vercel serverless wrapper around `getCompany()` for production. |
 | `js/dcf.js` | Pure reverse/forward DCF math — no DOM, no network. |
 | `js/app.js` | Fetch, render the tearsheet, and recompute on every assumption change. |
 | `css/app.css` | The "annual report" design system (shared tokens with the portfolio). |
@@ -49,13 +49,14 @@ opens the site and types a ticker gets a result.
 
 ### Vercel (recommended)
 
-Zero-config: the static site (`index.html`, `css/`, `js/`) lives at the repo
-root and [`api/company/[ticker].js`](api/company/[ticker].js) is a serverless
-function (it reuses `lib/provider.js`). No `vercel.json` or build step needed.
+The static site (`index.html`, `css/`, `js/`) lives at the repo root and
+[`api/company.js`](api/company.js) is a serverless function (it reuses
+`lib/provider.js`). [`vercel.json`](vercel.json) declares an explicit
+static + Node build so Vercel doesn't try to auto-detect the Express server.
 
 1. Push to GitHub.
-2. In Vercel → **Add New → Project**, import the repo. Framework Preset: **Other**.
-3. **Deploy.** That's it — no environment variables, no build settings to change.
+2. In Vercel → **Add New → Project**, import the repo.
+3. **Deploy.** No environment variables; `vercel.json` overrides any build settings.
 
 ### Render / Railway (runs the Express server as-is)
 

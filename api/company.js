@@ -1,7 +1,7 @@
 // Vercel serverless function — GET /api/company/:ticker
 // Reuses the same data layer as the local Express server (lib/provider.js), so
 // there is one source of truth. No API key is required by yahoo-finance2.
-import { getCompany } from '../../lib/provider.js';
+import { getCompany } from '../lib/provider.js';
 
 // Module-scope cache: persists across warm invocations on the same instance.
 const cache = new Map();
