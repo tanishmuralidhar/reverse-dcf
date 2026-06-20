@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reverse DCF — What growth is priced in?</title>
+  <meta name="description" content="Enter any ticker to see the free-cash-flow growth rate the market is pricing into today's stock price, then stress-test it against the company's own history. A reverse discounted-cash-flow tearsheet.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Reverse DCF — What growth is priced in?">
+  <meta property="og:description" content="See the FCF growth the market is implicitly pricing into any stock, then stress-test it.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body id="top">
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="masthead" id="masthead">
+    <div class="container masthead__inner">
+      <a class="monogram" href="./" aria-label="Reverse DCF — home">Reverse&nbsp;DCF</a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <ul>
+          <li><a href="#method">Methodology</a></li>
+        </ul>
+      </nav>
+      <a class="masthead__credit" href="https://www.linkedin.com/in/tanishmuralidhar" target="_blank" rel="noopener">by Tanish Muralidhar <span aria-hidden="true">&#8599;</span></a>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ HERO / SEARCH ============ -->
+    <section class="hero" aria-label="Search">
+      <div class="container hero__inner">
+        <p class="eyebrow reveal">Market-Implied Expectations</p>
+        <h1 class="hero__name reveal">Reverse DCF</h1>
+        <p class="hero__subline reveal">Every stock price embeds an assumption about the future. Enter a ticker to back out the free-cash-flow growth rate the market is pricing in&nbsp;&mdash; then stress-test it against the company&rsquo;s own history.</p>
+
+        <form class="search reveal" id="search-form" autocomplete="off" novalidate>
+          <div class="search__field">
+            <span class="search__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <input
+              type="text"
+              id="ticker-input"
+              class="search__input"
+              placeholder="Enter a ticker — e.g. AAPL"
+              aria-label="Stock ticker"
+              maxlength="12"
+              spellcheck="false"
+              autocapitalize="characters">
+            <button type="submit" class="btn btn--primary search__btn" id="search-btn">Analyze</button>
+          </div>
+          <p class="search__examples" aria-label="Examples">
+            <span>Try</span>
+            <button type="button" class="chip" data-ticker="AAPL">AAPL</button>
+            <button type="button" class="chip" data-ticker="MSFT">MSFT</button>
+            <button type="button" class="chip" data-ticker="GOOGL">GOOGL</button>
+            <button type="button" class="chip" data-ticker="NVDA">NVDA</button>
+            <button type="button" class="chip" data-ticker="COST">COST</button>
+          </p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ STATE: LOADING ============ -->
+    <section class="state" id="state-loading" hidden aria-live="polite">
+      <div class="container state__inner">
+        <span class="spinner" aria-hidden="true"></span>
+        <p class="state__text">Pulling fundamentals<span id="loading-ticker"></span>&hellip;</p>
+      </div>
+    </section>
+
+    <!-- ============ STATE: ERROR ============ -->
+    <section class="state" id="state-error" hidden aria-live="assertive">
+      <div class="container state__inner">
+        <span class="state__mark" aria-hidden="true">&#9670;</span>
+        <p class="state__text" id="error-text">Something went wrong.</p>
+        <button type="button" class="btn btn--ghost btn--sm" id="error-retry">Try another ticker</button>
+      </div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <div id="results" hidden>
+
+      <!-- company header plate -->
+      <section class="section plate-section">
+        <div class="container">
+          <div class="co-plate" id="co-plate">
+            <div class="co-plate__id">
+              <h2 class="co-plate__name" id="co-name">—</h2>
+              <p class="co-plate__meta">
+                <span class="co-pill" id="co-ticker">—</span>
+                <span id="co-exchange">—</span>
+                <span class="co-plate__dot" aria-hidden="true">&middot;</span>
+                <span id="co-sector">—</span>
+              </p>
+            </div>
+            <div class="co-plate__price">
+              <p class="co-plate__px num" id="co-price">—</p>
+              <p class="co-plate__cap"><span class="num" id="co-mktcap">—</span> market cap</p>
+            </div>
+          </div>
+          <div class="banner" id="co-banner" hidden></div>
+        </div>
+      </section>
+
+      <!-- THE VERDICT -->
+      <section class="section section--tint" id="verdict-section" aria-labelledby="verdict-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 01</p>
+            <h2 class="sec-title" id="verdict-title" tabindex="-1">The Implied Growth</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+          </div>
+          <div class="verdict">
+            <div class="verdict__headline">
+              <p class="verdict__label">Market-implied FCF growth</p>
+              <p class="verdict__figure"><span class="num" id="implied-growth">—</span><span class="verdict__unit">/yr</span></p>
+              <p class="verdict__horizon">for <span id="implied-years">10</span> years, then <span id="implied-terminal">3.0%</span> in perpetuity</p>
+              <span class="verdict__pill" id="verdict-pill" hidden></span>
+            </div>
+            <div class="verdict__read">
+              <p class="verdict__sentence" id="verdict-sentence">—</p>
+              <dl class="benchmarks" id="benchmarks">
+                <div class="benchmark">
+                  <dt>Implied FCF growth</dt>
+                  <dd class="num" id="bm-implied">—</dd>
+                </div>
+                <div class="benchmark">
+                  <dt>Historical FCF CAGR (3y)</dt>
+                  <dd class="num" id="bm-fcf">—</dd>
+                </div>
+                <div class="benchmark">
+                  <dt>Historical revenue CAGR (3y)</dt>
+                  <dd class="num" id="bm-rev">—</dd>
+                </div>
+                <div class="benchmark">
+                  <dt>Earnings growth (TTM YoY)</dt>
+                  <dd class="num" id="bm-analyst">—</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASSUMPTIONS + FORWARD VALUE -->
+      <section class="section" id="model-section" aria-labelledby="model-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 02</p>
+            <h2 class="sec-title" id="model-title">Your Assumptions</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+            <p class="sec-intro">Adjust the inputs &mdash; the implied growth and fair value update live.</p>
+          </div>
+
+          <div class="model-grid">
+            <!-- controls -->
+            <div class="controls">
+              <div class="control">
+                <label class="control__label" for="in-discount">Discount rate
+                  <span class="control__val num" id="val-discount">9.0%</span>
+                </label>
+                <input type="range" id="in-discount" min="6" max="16" step="0.25" value="9">
+                <p class="control__hint" id="hint-discount">Cost of equity (CAPM)</p>
+              </div>
+
+              <div class="control">
+                <label class="control__label" for="in-terminal">Terminal growth
+                  <span class="control__val num" id="val-terminal">3.0%</span>
+                </label>
+                <input type="range" id="in-terminal" min="0" max="5" step="0.25" value="3">
+                <p class="control__hint">Perpetuity growth after the forecast</p>
+              </div>
+
+              <div class="control">
+                <label class="control__label" for="in-years">Forecast horizon
+                  <span class="control__val num" id="val-years">10 yrs</span>
+                </label>
+                <input type="range" id="in-years" min="5" max="15" step="1" value="10">
+                <p class="control__hint">Length of the explicit growth period</p>
+              </div>
+
+              <div class="control">
+                <label class="control__label" for="in-base">Base free cash flow</label>
+                <select id="in-base" class="control__select"></select>
+                <p class="control__hint" id="hint-base">Starting FCF the model grows</p>
+              </div>
+            </div>
+
+            <!-- forward value card -->
+            <div class="fv-card">
+              <p class="fv-card__title">Forward fair value</p>
+              <div class="control control--inline">
+                <label class="control__label" for="in-growth">If FCF grows
+                  <span class="control__val num" id="val-growth">10.0%</span>/yr
+                </label>
+                <input type="range" id="in-growth" min="-10" max="40" step="0.5" value="10">
+              </div>
+              <div class="fv-card__result">
+                <div class="fv-stat">
+                  <p class="fv-stat__label">Fair value / share</p>
+                  <p class="fv-stat__num num" id="fv-pershare">—</p>
+                </div>
+                <div class="fv-stat">
+                  <p class="fv-stat__label">vs. price</p>
+                  <p class="fv-stat__num num" id="fv-upside">—</p>
+                </div>
+              </div>
+              <div class="bridge" id="value-bridge">
+                <div class="bridge__row"><span>PV of forecast FCF</span><span class="num" id="br-explicit">—</span></div>
+                <div class="bridge__row"><span>PV of terminal value</span><span class="num" id="br-terminal">—</span></div>
+                <div class="bridge__row bridge__row--total"><span>Intrinsic equity value</span><span class="num" id="br-equity">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SENSITIVITY -->
+      <section class="section section--tint" id="sensitivity-section" aria-labelledby="sens-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 03</p>
+            <h2 class="sec-title" id="sens-title">Sensitivity</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+            <p class="sec-intro">Implied FCF growth across discount rate (rows) and terminal growth (columns).</p>
+          </div>
+          <div class="sens-wrap">
+            <table class="sens-table" id="sens-table" aria-label="Implied growth sensitivity">
+              <thead id="sens-head"></thead>
+              <tbody id="sens-body"></tbody>
+            </table>
+          </div>
+          <p class="sens-legend"><span class="sens-legend__chip sens-cell--low"></span> less demanding <span class="sens-legend__spacer"></span> <span class="sens-legend__chip sens-cell--high"></span> more demanding</p>
+        </div>
+      </section>
+
+      <!-- KEY STATISTICS -->
+      <section class="section" id="stats-section" aria-labelledby="stats-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 04</p>
+            <h2 class="sec-title" id="stats-title">Key Statistics</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+          </div>
+          <dl class="kpi-grid" id="kpi-grid"></dl>
+        </div>
+      </section>
+
+      <!-- FINANCIAL HISTORY -->
+      <section class="section section--tint" id="history-section" aria-labelledby="history-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 05</p>
+            <h2 class="sec-title" id="history-title">Financial History</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+            <p class="sec-intro">Revenue and free cash flow, last reported fiscal years.</p>
+          </div>
+          <div class="chart" id="chart"></div>
+          <div class="hist-wrap">
+            <table class="hist-table" id="hist-table">
+              <thead id="hist-head"></thead>
+              <tbody id="hist-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- METHODOLOGY -->
+      <section class="section" id="method" aria-labelledby="method-title">
+        <div class="container">
+          <div class="sec-head reveal">
+            <p class="sec-index">No. 06</p>
+            <h2 class="sec-title" id="method-title">Methodology</h2>
+            <span class="sec-rule" aria-hidden="true"></span>
+          </div>
+          <div class="method-body">
+            <p>A <strong>reverse discounted-cash-flow</strong> flips an ordinary DCF on its head. Instead of forecasting cash flows to estimate what a company is worth, it takes today&rsquo;s price as given and solves for the assumption that justifies it &mdash; here, the free-cash-flow growth rate implied over the forecast horizon.</p>
+            <p>The model is a <strong>two-stage DCF on free cash flow</strong> (operating cash flow minus capital expenditure). The explicit period grows base FCF at the solved rate for the chosen horizon; a Gordon-growth perpetuity captures everything after. Because free cash flow is already a levered, after-tax cash flow to equity holders, discounting it at the cost of equity yields the intrinsic equity value directly, and dividing by shares outstanding gives value per share. A bisection solver finds the growth rate that sets value per share equal to the current price.</p>
+            <p class="method-note">Free cash flow is a poor valuation base for banks, insurers, and other financials &mdash; those names are flagged. Figures are sourced from Yahoo Finance and may be delayed or restated. This tool is for educational purposes and is <strong>not investment advice</strong>.</p>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /#results -->
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <p class="footer__mark">Reverse DCF</p>
+      <p class="footer__disclaimer">Data via Yahoo Finance, delayed. Educational use only &mdash; not investment advice. Implied-growth figures depend entirely on the assumptions you set.</p>
+      <div class="footer__bottom">
+        <span class="num">&copy; 2026</span>
+        <a href="https://www.linkedin.com/in/tanishmuralidhar" target="_blank" rel="noopener">Tanish Muralidhar</a>
+        <span>Austin, TX</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
