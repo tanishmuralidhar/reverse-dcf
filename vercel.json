@@ -1,9 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "public",
-  "functions": {
-    "api/company/[ticker].js": {
-      "maxDuration": 15
-    }
-  }
+  "outputDirectory": "public"
 }
